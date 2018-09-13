@@ -223,7 +223,7 @@ private slots:
     void onPidClicked(JointItem *joint);
     void onSendPositionPid(int jointIndex, Pid newPid);
     void onSendVelocityPid(int jointIndex, Pid newPid);
-    void onSendCurrentPid(int jointIndex, Pid newPid);
+    void onSendCurrentPid(int jointIndex, Pid newPid, MotorCurrentParameters newCurrentParam);
     void onSendSingleRemoteVariable(std::string key, yarp::os::Bottle val);
     void onUpdateAllRemoteVariables();
     void onSendTorquePid(int jointIndex, Pid newPid, MotorTorqueParameters newTorqueParam);

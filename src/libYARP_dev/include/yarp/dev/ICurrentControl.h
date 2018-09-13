@@ -16,8 +16,18 @@ namespace yarp {
     namespace dev {
         class ICurrentControlRaw;
         class ICurrentControl;
+        class MotorCurrentParameters;
       }
 }
+
+class YARP_dev_API yarp::dev::MotorCurrentParameters
+{
+    public:
+    double kff;
+    double kbef;
+    double wbef;
+    MotorCurrentParameters() : kff(0), kbef(0), wbef(0) {};
+};
 
 /**
  * @ingroup dev_iface_motor
@@ -61,6 +71,20 @@ public:
     * @return true/false on success/failure
     */
     virtual bool getCurrentRange(int m, double *min, double *max) = 0;
+
+    /** Get a subset of motor parameters (bemf, ktau etc) useful for torque control.
+    * @param j joint number
+    * @param params a struct containing the motor parameters to be retrieved
+    * @return true/false on success/failure
+    */
+    virtual bool getMotorCurrentParams(int j,  yarp::dev::MotorCurrentParameters *params) {return false;}
+
+    /** Set a subset of motor parameters (bemf, ktau etc) useful for torque control.
+    * @param j joint number
+    * @param params a struct containing the motor parameters to be set
+    * @return true/false on success/failure
+    */
+    virtual bool setMotorCurrentParams(int j,  const yarp::dev::MotorCurrentParameters params) {return false;}
 
     /** Get the full scale of the current measurements for all motors motor (e.g. -20A +20A)
     * Reference values set by user with methods such as setRefCurrent() should be in this range.

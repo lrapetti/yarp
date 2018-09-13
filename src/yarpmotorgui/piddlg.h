@@ -50,7 +50,7 @@ public:
     void initPosition(Pid myPid);
     void initVelocity(Pid myPid);
     void initTorque(Pid myPid, MotorTorqueParameters TorqueParam);
-    void initCurrent(Pid myPid);
+    void initCurrent(Pid myPid, MotorCurrentParameters CurrentParam);
     void initStiffness(double curStiffVal, double minStiff, double maxStiff,
                        double curDampVal, double minDamp, double maxDamp,
                        double curForceVal, double minForce, double maxForce);
@@ -65,7 +65,7 @@ signals:
     void sendTorquePid(int jointIndex,Pid,MotorTorqueParameters newTorqueParam);
     void sendPWM(int jointIndex,double dutyVal);
     void sendCurrent(int jointIndex,int currentVal);
-    void sendCurrentPid(int jointIndex, Pid pid);
+    void sendCurrentPid(int jointIndex, Pid pid,MotorCurrentParameters newCurrentParam);
     void sendSingleRemoteVariable(std::string key, yarp::os::Bottle val);
     void refreshPids(int jointIndex);
     void updateAllRemoteVariables();

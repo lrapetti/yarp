@@ -35,6 +35,8 @@
 #include <cmath>
 #include <cstdio>
 
+#include <iostream>
+
 PartItem::PartItem(QString robotName, int id, QString partName, ResourceFinder& _finder,
                    bool debug_param_enabled,
                    bool speedview_param_enabled,
@@ -711,6 +713,7 @@ void PartItem::onRefreshPids(int jointIndex)
     Pid myVelPid(0, 0, 0, 0, 0, 0);
     Pid myCurPid(0, 0, 0, 0, 0, 0);
     MotorTorqueParameters motorTorqueParams;
+    MotorCurrentParameters motorCurrentParams;
     double stiff_val = 0;
     double damp_val = 0;
     double stiff_max = 0;
@@ -737,8 +740,10 @@ void PartItem::onRefreshPids(int jointIndex)
     // Current
     if (m_iCur)
     {
+
         m_iPid->getPid(VOCAB_PIDTYPE_CURRENT, jointIndex, &myCurPid);
         yarp::os::SystemClock::delaySystem(0.005);
+        std::cerr << "IN m_iCur " << jointIndex << " " << VOCAB_PIDTYPE_CURRENT << " Kp: " << myCurPid.kp << std::endl;
     }
 
     // Torque
@@ -760,14 +765,14 @@ void PartItem::onRefreshPids(int jointIndex)
         m_currentPidDlg->initPosition(myPosPid);
         m_currentPidDlg->initTorque(myTrqPid, motorTorqueParams);
         m_currentPidDlg->initVelocity(myVelPid);
-        m_currentPidDlg->initCurrent(myCurPid);
+        m_currentPidDlg->initCurrent(myCurPid, motorCurrentParams);
         m_currentPidDlg->initStiffness(stiff_val, stiff_min, stiff_max, damp_val, damp_min, damp_max, impedance_offset_val, off_min, off_max);
         m_currentPidDlg->initPWM(pwm_reference, current_pwm);
         m_currentPidDlg->initRemoteVariables(m_iVar);
     }
 }
 
-void PartItem::onSendCurrentPid(int jointIndex, Pid newPid)
+void PartItem::onSendCurrentPid(int jointIndex, Pid newPid, MotorCurrentParameters newCurrParam)
 {
     if (m_iCur == nullptr)
     {
@@ -775,12 +780,15 @@ void PartItem::onSendCurrentPid(int jointIndex, Pid newPid)
         return;
     }
     Pid myCurPid(0, 0, 0, 0, 0, 0);
+    yarp::dev::MotorCurrentParameters CurrParam;
     m_iPid->setPid(VOCAB_PIDTYPE_CURRENT, jointIndex, newPid);
+    m_iCur->setMotorCurrentParams(jointIndex, newCurrParam);
     yarp::os::SystemClock::delaySystem(0.005);
     m_iPid->getPid(VOCAB_PIDTYPE_CURRENT, jointIndex, &myCurPid);
+    m_iCur->getMotorCurrentParams(jointIndex, &CurrParam);
 
     if (m_currentPidDlg){
-        m_currentPidDlg->initCurrent(myCurPid);
+        m_currentPidDlg->initCurrent(myCurPid, CurrParam);
     }
 }
 
@@ -828,7 +836,7 @@ void PartItem::onPidClicked(JointItem *joint)
     m_currentPidDlg = new PidDlg(m_partName, jointIndex, jointName);
     connect(m_currentPidDlg, SIGNAL(sendPositionPid(int, Pid)), this, SLOT(onSendPositionPid(int, Pid)));
     connect(m_currentPidDlg, SIGNAL(sendVelocityPid(int, Pid)), this, SLOT(onSendVelocityPid(int, Pid)));
-    connect(m_currentPidDlg, SIGNAL(sendCurrentPid(int, Pid)), this, SLOT(onSendCurrentPid(int, Pid)));
+    connect(m_currentPidDlg, SIGNAL(Pid(int, Pid, MotorCurrentParameters)), this, SLOT(onSendCurrentPid(int, Pid)));
     connect(m_currentPidDlg, SIGNAL(sendSingleRemoteVariable(std::string, yarp::os::Bottle)), this, SLOT(onSendSingleRemoteVariable(std::string, yarp::os::Bottle)));
     connect(m_currentPidDlg, SIGNAL(updateAllRemoteVariables()), this, SLOT(onUpdateAllRemoteVariables()));
     connect(m_currentPidDlg, SIGNAL(sendTorquePid(int, Pid, MotorTorqueParameters)), this, SLOT(onSendTorquePid(int, Pid, MotorTorqueParameters)));

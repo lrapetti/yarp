@@ -23,6 +23,7 @@
 #include <QPushButton>
 #include <yarp/os/Bottle.h>
 #include <yarp/os/Value.h>
+#include <iostream>
 
 #define     TAB_POSITION    0
 #define     TAB_VELOCITY    1
@@ -68,12 +69,15 @@
 #define     TORQUE_KTAUSCALE    13
 
 #define     CURRENT_KP         0
-#define     CURRENT_KD         1
-#define     CURRENT_KI         2
-#define     CURRENT_SCALE      3
+#define     CURRENT_KI         1
+#define     CURRENT_KD         2
+#define     CURRENT_MAXINT     3
 #define     CURRENT_MAXOUTPUT  4
-#define     CURRENT_MAXINT     5
-#define     CURRENT_OFFSET     6
+#define     CURRENT_OFFSET     5
+#define     CURRENT_KFF        6
+#define     CURRENT_KBEF       7
+#define     CURRENT_WBEF       8
+
 
 PidDlg::PidDlg(QString partname, int jointIndex, QString jointName, QWidget *parent) :
     QDialog(parent),
@@ -336,28 +340,47 @@ void PidDlg::initPWM(double PWMVal, double pwm)
     ui->tablePWM->item(1,0)->setText(QString("%1").arg(pwm));
 }
 
-void PidDlg::initCurrent(Pid myPid)
+void PidDlg::initCurrent(Pid myPid, MotorCurrentParameters CurrParam)
 {
+    std::cerr << ">>>>>>>  INIT CURRENT <<<<<<<<" << std::endl;
     ui->tableCurrent->item(CURRENT_KP, 0)->setText(QString("%1").arg((double)myPid.kp));
     ui->tableCurrent->item(CURRENT_KP, 1)->setText(QString("%1").arg((double)myPid.kp));
-
-    ui->tableCurrent->item(CURRENT_KD, 0)->setText(QString("%1").arg((double)myPid.kd));
-    ui->tableCurrent->item(CURRENT_KD, 1)->setText(QString("%1").arg((double)myPid.kd));
 
     ui->tableCurrent->item(CURRENT_KI, 0)->setText(QString("%1").arg((double)myPid.ki));
     ui->tableCurrent->item(CURRENT_KI, 1)->setText(QString("%1").arg((double)myPid.ki));
 
-    ui->tableCurrent->item(CURRENT_SCALE, 0)->setText(QString("%1").arg((int)myPid.scale));
-    ui->tableCurrent->item(CURRENT_SCALE, 1)->setText(QString("%1").arg((int)myPid.scale));
+    ui->tableCurrent->item(CURRENT_KD, 0)->setText(QString("%1").arg((double)myPid.kd));
+    ui->tableCurrent->item(CURRENT_KD, 1)->setText(QString("%1").arg((double)myPid.kd));
 
-    ui->tableCurrent->item(CURRENT_OFFSET, 0)->setText(QString("%1").arg((int)myPid.offset));
-    ui->tableCurrent->item(CURRENT_OFFSET, 1)->setText(QString("%1").arg((int)myPid.offset));
+    ui->tableCurrent->item(CURRENT_MAXINT, 0)->setText(QString("%1").arg((int)myPid.max_int));
+    ui->tableCurrent->item(CURRENT_MAXINT, 1)->setText(QString("%1").arg((int)myPid.max_int));
 
     ui->tableCurrent->item(CURRENT_MAXOUTPUT, 0)->setText(QString("%1").arg((int)myPid.max_output));
     ui->tableCurrent->item(CURRENT_MAXOUTPUT, 1)->setText(QString("%1").arg((int)myPid.max_output));
 
-    ui->tableCurrent->item(CURRENT_MAXINT, 0)->setText(QString("%1").arg((int)myPid.max_int));
-    ui->tableCurrent->item(CURRENT_MAXINT, 1)->setText(QString("%1").arg((int)myPid.max_int));
+    ui->tableCurrent->item(CURRENT_OFFSET, 0)->setText(QString("%1").arg((int)myPid.offset));
+    ui->tableCurrent->item(CURRENT_OFFSET, 1)->setText(QString("%1").arg((int)myPid.offset));
+
+    std::cerr << ">>>>>>>  FINISH MYPID <<<<<<<<" << std::endl;
+
+    std::cerr << ">>>>>>>  1 INV <<<<<<<<" << std::endl;
+    std::cerr << CurrParam.kff << std::endl;
+    std::cerr << CurrParam.kbef << std::endl;
+    std::cerr << CurrParam.wbef << std::endl;
+
+    ui->tableCurrent->item(CURRENT_KFF, 0)->setText(QString("%1").arg((double)CurrParam.kff));
+    ui->tableCurrent->item(CURRENT_KFF, 1)->setText(QString("%1").arg((double)CurrParam.kff));
+
+    std::cerr << ">>>>>>>  2 <<<<<<<<" << std::endl;
+
+    ui->tableCurrent->item(CURRENT_KBEF, 0)->setText(QString("%1").arg((double)CurrParam.kbef));
+    ui->tableCurrent->item(CURRENT_KBEF, 1)->setText(QString("%1").arg((double)CurrParam.kbef));
+
+    std::cerr << ">>>>>>>  3 <<<<<<<<" << std::endl;
+
+    ui->tableCurrent->item(CURRENT_WBEF, 0)->setText(QString("%1").arg((double)CurrParam.wbef));
+    ui->tableCurrent->item(CURRENT_WBEF, 1)->setText(QString("%1").arg((double)CurrParam.wbef));
+    std::cerr << ">>>>>>>  FINISHED INIT CURRENT <<<<<<<<" << std::endl;
 }
 
 void PidDlg::onRefresh()
@@ -369,6 +392,7 @@ void PidDlg::onSend()
 {
     Pid newPid;
     MotorTorqueParameters newMotorTorqueParams;
+    MotorCurrentParameters newMotorCurrentParams;
 
     switch (ui->tabMain->currentIndex()) {
     case TAB_POSITION:
@@ -426,13 +450,15 @@ void PidDlg::onSend()
     }
     case TAB_CURRENT:{
         newPid.kp = ui->tableCurrent->item(CURRENT_KP, 1)->text().toDouble();
-        newPid.kd = ui->tableCurrent->item(CURRENT_KD, 1)->text().toDouble();
         newPid.ki = ui->tableCurrent->item(CURRENT_KI, 1)->text().toDouble();
-        newPid.scale = ui->tableCurrent->item(CURRENT_SCALE, 1)->text().toDouble();
-        newPid.offset = ui->tableCurrent->item(CURRENT_OFFSET, 1)->text().toDouble();
-        newPid.max_output = ui->tableCurrent->item(CURRENT_MAXOUTPUT, 1)->text().toDouble();
+        newPid.kd = ui->tableCurrent->item(CURRENT_KD, 1)->text().toDouble();
         newPid.max_int = ui->tableCurrent->item(CURRENT_MAXINT, 1)->text().toDouble();
-        emit sendCurrentPid(jointIndex, newPid);
+        newPid.max_output = ui->tableCurrent->item(CURRENT_MAXOUTPUT, 1)->text().toDouble();
+        newPid.offset = ui->tableCurrent->item(CURRENT_OFFSET, 1)->text().toDouble();
+        newMotorCurrentParams.kff = ui->tableCurrent->item(CURRENT_KFF, 1)->text().toDouble();
+        newMotorCurrentParams.kbef = ui->tableCurrent->item(CURRENT_KBEF, 1)->text().toDouble();
+        newMotorCurrentParams.wbef = ui->tableCurrent->item(CURRENT_WBEF, 1)->text().toDouble();
+        emit sendCurrentPid(jointIndex, newPid, newMotorCurrentParams);
         break;
     }
     case TAB_VARIABLES:{
